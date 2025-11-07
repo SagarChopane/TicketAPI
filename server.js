@@ -9,7 +9,6 @@ const USERS_FILE = "./data/users.txt";
 const EVENTS_FILE = "./data/events.txt";
 const TICKETS_FILE = "./data/tickets.txt";
 
-// ✅ Helper: read and write functions
 function readData(file) {
   if (!fs.existsSync(file)) return [];
   const data = fs.readFileSync(file, "utf8");
@@ -20,7 +19,6 @@ function writeData(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-// 🧍 Register user
 app.post("/api/register", (req, res) => {
   const { name, email, password, role } = req.body;
   if (!name || !email || !password)
@@ -43,7 +41,6 @@ app.post("/api/register", (req, res) => {
   res.json({ message: "User registered successfully" });
 });
 
-// 🔑 Login user
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
   const users = readData(USERS_FILE);
@@ -56,7 +53,6 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-// 🎟️ Create event (admin only)
 app.post("/api/events", (req, res) => {
   const { adminEmail, name, category, date, basePrice } = req.body;
   const users = readData(USERS_FILE);
@@ -77,7 +73,6 @@ app.post("/api/events", (req, res) => {
   res.json({ message: "Event created successfully" });
 });
 
-// 🎫 Book ticket
 app.post("/api/tickets/book", (req, res) => {
   const { userEmail, eventId, quantity } = req.body;
 
@@ -110,7 +105,6 @@ app.post("/api/tickets/book", (req, res) => {
   });
 });
 
-// ❌ Cancel booking
 app.patch("/api/tickets/cancel/:id", (req, res) => {
   const { id } = req.params;
   const { userEmail } = req.body;
@@ -127,29 +121,6 @@ app.patch("/api/tickets/cancel/:id", (req, res) => {
   writeData(TICKETS_FILE, tickets);
 
   res.json({ message: "Booking cancelled successfully" });
-});
-
-// 📊 Admin report (simple)
-app.get("/api/admin/report", (req, res) => {
-  const { adminEmail } = req.query;
-  const users = readData(USERS_FILE);
-  const admin = users.find((u) => u.email === adminEmail && u.role === "admin");
-  if (!admin) return res.status(403).json({ message: "Admin only" });
-
-  const tickets = readData(TICKETS_FILE).filter((t) => t.status === "booked");
-  const events = readData(EVENTS_FILE);
-
-  let totalRevenue = 0;
-  let totalBookings = tickets.length;
-
-  tickets.forEach((t) => (totalRevenue += t.totalAmount));
-
-  res.json({
-    summary: {
-      totalBookings,
-      totalRevenue,
-    },
-  });
 });
 
 app.listen(3000, () => console.log("✅ Server running on port 3000"));
